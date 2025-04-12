@@ -75,33 +75,48 @@
         }
 
         async function loadArticles(limit = 10, offset = 0) {
-            // const res = await fetch(`${apiUrl}/${limit}/${offset}`);
             const res = await fetch(`${apiUrl}/${limit}/${offset}`, {
-                method: 'GET',
-                headers: {
-                    'Origin': 'https://shagya-tech.my.id'
-                }
+                method: 'GET'
             });
-            const articles = await res.json();
+
+            const result = await res.json();
+            console.log(result); // Log untuk memastikan struktur response
+
+            const articles = result.data; // ✅ ini yang benar
+
+            // Pengecekan apakah articles adalah array
+            if (!Array.isArray(articles)) {
+                console.error('Expected an array, but got:', articles);
+                return; // Jangan lanjutkan jika bukan array
+            }
 
             const container = document.getElementById('articles');
             container.innerHTML = '';
 
+            // Jika tidak ada artikel
+            if (articles.length === 0) {
+                container.innerHTML = '<p>Tidak ada artikel untuk ditampilkan.</p>';
+                return; // Berhenti jika tidak ada artikel
+            }
+
+            // Menampilkan artikel
             articles.forEach(article => {
                 const div = document.createElement('div');
                 div.className = 'article';
                 div.innerHTML = `
-          <h3>${article.title}</h3>
-          <p>${article.content}</p>
-          <p><strong>Kategori:</strong> ${article.category} | <strong>Status:</strong> ${article.status}</p>
-          <div class="flex">
-            <button onclick="editArticle('${article._id}')">✏️ Edit</button>
-            <button onclick="deleteArticle('${article._id}')">🗑️ Hapus</button>
-          </div>
+            <h3>${article.title}</h3>
+            <p>${article.content}</p>
+            <p><strong>Kategori:</strong> ${article.category} | <strong>Status:</strong> ${article.status}</p>
+            <div class="flex">
+                <button onclick="editArticle('${article.id}')">✏️ Edit</button>
+                <button onclick="deleteArticle('${article.id}')">🗑️ Hapus</button>
+            </div>
         `;
                 container.appendChild(div);
             });
         }
+
+
 
         async function deleteArticle(id) {
             if (!confirm("Yakin ingin menghapus artikel ini?")) return;
