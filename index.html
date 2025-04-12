@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Article Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        input,
+        textarea,
+        button,
+        select {
+            display: block;
+            margin: 10px 0;
+            padding: 8px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .article {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        .flex {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>📝 Tambah Artikel</h2>
+    <input type="text" id="title" placeholder="Judul" />
+    <textarea id="content" placeholder="Konten"></textarea>
+    <input type="text" id="category" placeholder="Kategori" />
+    <select id="status">
+        <option value="draft">Draft</option>
+        <option value="published">Published</option>
+    </select>
+    <button onclick="createArticle()">➕ Simpan Artikel</button>
+
+    <h2>📄 Daftar Artikel</h2>
+    <div id="articles"></div>
+
+    <script>
+        const apiUrl = 'https://shagya-tech.my.id/article'; // Ganti sesuai host kamu
+
+        async function createArticle() {
+            const data = {
+                title: document.getElementById('title').value,
+                content: document.getElementById('content').value,
+                category: document.getElementById('category').value,
+                status: document.getElementById('status').value
+            };
+
+            await fetch(apiUrl + '/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Origin': 'https://shagya-tech.my.id'
+                },
+                body: JSON.stringify(data)
+            });
+
+            alert("Artikel berhasil ditambahkan!");
+            loadArticles();
+        }
+
+        async function loadArticles(limit = 10, offset = 0) {
+            // const res = await fetch(`${apiUrl}/${limit}/${offset}`);
+            const res = await fetch(`${apiUrl}/${limit}/${offset}`, {
+                method: 'GET',
+                headers: {
+                    'Origin': 'https://shagya-tech.my.id'
+                }
+            });
+            const articles = await res.json();
+
+            const container = document.getElementById('articles');
+            container.innerHTML = '';
+
+            articles.forEach(article => {
+                const div = document.createElement('div');
+                div.className = 'article';
+                div.innerHTML = `
+          <h3>${article.title}</h3>
+          <p>${article.content}</p>
+          <p><strong>Kategori:</strong> ${article.category} | <strong>Status:</strong> ${article.status}</p>
+          <div class="flex">
+            <button onclick="editArticle('${article._id}')">✏️ Edit</button>
+            <button onclick="deleteArticle('${article._id}')">🗑️ Hapus</button>
+          </div>
+        `;
+                container.appendChild(div);
+            });
+        }
+
+        async function deleteArticle(id) {
+            if (!confirm("Yakin ingin menghapus artikel ini?")) return;
+            await fetch(`${apiUrl}/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Origin': 'https://shagya-tech.my.id'
+                }
+            });
+            alert("Artikel dihapus!");
+            loadArticles();
+        }
+
+        async function editArticle(id) {
+            const res = await fetch(`${apiUrl}/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Origin': 'https://shagya-tech.my.id'
+                }
+            });
+            const article = await res.json();
+
+            document.getElementById('title').value = article.title;
+            document.getElementById('content').value = article.content;
+            document.getElementById('category').value = article.category;
+            document.getElementById('status').value = article.status;
+
+            document.querySelector('button').innerText = '💾 Update Artikel';
+            document.querySelector('button').onclick = async () => {
+                const updated = {
+                    title: document.getElementById('title').value,
+                    content: document.getElementById('content').value,
+                    category: document.getElementById('category').value,
+                    status: document.getElementById('status').value
+                };
+
+                await fetch(`${apiUrl}/${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updated)
+                });
+
+                alert("Artikel diperbarui!");
+                document.querySelector('button').innerText = '➕ Simpan Artikel';
+                document.querySelector('button').onclick = createArticle;
+                loadArticles();
+            };
+        }
+
+        window.onload = () => loadArticles();
+    </script>
+</body>
+
+</html>
